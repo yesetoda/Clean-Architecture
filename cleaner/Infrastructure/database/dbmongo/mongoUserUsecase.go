@@ -11,23 +11,10 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type MongoUserRepo struct {
-	db         *mongo.Database
-	collection string
-}
-
-func NewMongoUserRepository(db *mongo.Database, collection string) *MongoUserRepo {
-	return &MongoUserRepo{
-		db:         db,
-		collection: collection,
-	}
-}
-
-func (mts *MongoUserRepo) GetAllUsers() []*domain.User {
+func (mts *MongoRepo) GetAllUsers() []*domain.User {
 	fmt.Println("mongoUserCollection---GetAllUsers")
 	fmt.Println("mongoUserCollection---GetAllUsers")
 	findOption := options.Find()
@@ -52,7 +39,7 @@ func (mts *MongoUserRepo) GetAllUsers() []*domain.User {
 	return Users
 
 }
-func (mts *MongoUserRepo) GetUserByUsername(username string) (*domain.User, error) {
+func (mts *MongoRepo) GetUserByUsername(username string) (*domain.User, error) {
 	fmt.Println("mongoUserCollection---GetUserByUsername---", username)
 	fmt.Println("mongoUserCollection---GetUserByUsername")
 
@@ -66,7 +53,7 @@ func (mts *MongoUserRepo) GetUserByUsername(username string) (*domain.User, erro
 	return &User, nil
 
 }
-func (mts *MongoUserRepo) CreateUser(User domain.User) (string, error) {
+func (mts *MongoRepo) CreateUser(User domain.User) (string, error) {
 	fmt.Println("mongoUserCollection---CreateUser")
 	fmt.Println("mongoUserCollection---CreateUser")
 
@@ -90,7 +77,7 @@ func (mts *MongoUserRepo) CreateUser(User domain.User) (string, error) {
 	}
 	return "invalid  request Username is taken", err
 }
-func (mts *MongoUserRepo) PromoteUser(username string, updateBson bson.M) error {
+func (mts *MongoRepo) PromoteUser(username string, updateBson bson.M) error {
 	fmt.Println("mongoUserCollection---UpdateUser", username)
 	fmt.Println("mongoUserCollection---UpdateUser")
 
@@ -115,7 +102,7 @@ func (mts *MongoUserRepo) PromoteUser(username string, updateBson bson.M) error 
 	fmt.Println(result)
 	return nil
 }
-func (mts *MongoUserRepo) DeleteUser(username string) error {
+func (mts *MongoRepo) DeleteUser(username string) error {
 	fmt.Println("mongoUserCollection---DeleteUser")
 	fmt.Println("mongoUserCollection---DeleteUser")
 
@@ -134,7 +121,7 @@ func (mts *MongoUserRepo) DeleteUser(username string) error {
 
 }
 
-func (mts *MongoUserRepo) FilterUser(filter bson.M) []*domain.User {
+func (mts *MongoRepo) FilterUser(filter bson.M) []*domain.User {
 	fmt.Println("mongoUserCollection---FilterUser")
 	fmt.Println("mongoUserCollection---FilterUser")
 
@@ -163,7 +150,7 @@ func (mts *MongoUserRepo) FilterUser(filter bson.M) []*domain.User {
 
 }
 
-func (mts *MongoUserRepo) Login(username, password string) (string, error) {
+func (mts *MongoRepo) Login(username, password string) (string, error) {
 	fmt.Println("mongoUserCollection---Login")
 	fmt.Println("mongoUserCollection---Login")
 
@@ -178,8 +165,9 @@ func (mts *MongoUserRepo) Login(username, password string) (string, error) {
 	// 	// Check user credentials
 	var user domain.User
 	err := cursor.Decode(&user)
+	// fmt.Println("this is the user", user)
 	if err != nil {
-		return "", err
+		return "", errors.New("no such user")
 	}
 	if !hashing.VerifyPassword(password, user.Password) {
 		return "", errors.New("invalid credentials")
@@ -199,25 +187,4 @@ func (mts *MongoUserRepo) Login(username, password string) (string, error) {
 	}
 
 	return tokenString, nil
-
-	// fmt.Println("this is the filter", filter)
-	// cur, err := mts.db.Collection(mts.collection).Find(context.TODO(), filter, findOptions)
-	// if err != nil {
-	// 	return []*domain.User{}
-	// }
-	// result := []*domain.User{}
-	// for cur.Next(context.TODO()) {
-	// 	var elem domain.User
-	// 	err := cur.Decode(&elem)
-	// 	if err != nil {
-	// 		return []*domain.User{}
-	// 	}
-	// 	result = append(result, &elem)
-	// }
-	// if err := cur.Err(); err != nil {
-	// 	return []*domain.User{}
-	// }
-	// cur.Close(context.TODO())
-	// return result
-
 }

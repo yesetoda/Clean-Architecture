@@ -3,8 +3,9 @@ package main
 import (
 	"example/cleaner/Infrastructure/database/dbmongo"
 	ginrouter "example/cleaner/Infrastructure/router/routergin"
-	"example/cleaner/controller"
+	"example/cleaner/Infrastructure/router/routergin/controller"
 	"example/cleaner/usecases"
+	"fmt"
 	"log"
 	"os"
 
@@ -16,11 +17,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, dbname, taskCollectionName, userCollectionName := os.Getenv("MongodbUri"), os.Getenv("MongodbName"), os.Getenv("TaskCollectionName"), os.Getenv("UserCollectionName")
-	// fmt.Println(uri, dbname, taskCollectionName, userCollectionName)
-	client := dbmongo.GetNewMongoClient()
-	taskCollection := dbmongo.NewMongoTaskRepository(client.Database(dbname), taskCollectionName)
-	userCollection := dbmongo.NewMongoUserRepository(client.Database(dbname), userCollectionName)
+	uri, dbname, taskCollectionName, userCollectionName := os.Getenv("MongodbUri"), os.Getenv("MongodbName"), os.Getenv("TaskCollectionName"), os.Getenv("UserCollectionName")
+	fmt.Println(uri, dbname, taskCollectionName, userCollectionName)
+	taskCollection := dbmongo.NewCollection(dbname, taskCollectionName)
+	userCollection := dbmongo.NewCollection(dbname, userCollectionName)
 	tc := controller.GInTaskController{
 		Taskusecase: usecases.TaskUsecase{
 			Repository: taskCollection,

@@ -24,3 +24,19 @@ func GetNewMongoClient() *mongo.Client {
 
 	return client
 }
+
+type MongoRepo struct {
+	db         *mongo.Database
+	collection string
+}
+func NewMongoRepository(db *mongo.Database, collection string) *MongoRepo {
+	return &MongoRepo{
+		db:         db,
+		collection: collection,
+	}
+}
+func NewCollection(dbname ,taskCollectionName string) *MongoRepo{
+	client := GetNewMongoClient()
+	return  NewMongoRepository(client.Database(dbname), taskCollectionName)
+
+}

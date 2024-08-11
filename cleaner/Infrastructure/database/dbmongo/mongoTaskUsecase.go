@@ -6,23 +6,10 @@ import (
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type MongoTaskRepo struct {
-	db         *mongo.Database
-	collection string
-}
-
-func NewMongoTaskRepository(db *mongo.Database, collection string) *MongoTaskRepo {
-	return &MongoTaskRepo{
-		db:         db,
-		collection: collection,
-	}
-}
-
-func (mts *MongoTaskRepo) GetAllTasks() []*domain.Task {
+func (mts *MongoRepo) GetAllTasks() []*domain.Task {
 	fmt.Println("mongoTaskCollection---GetAllTasks")
 	fmt.Println("mongoTaskCollection---GetAllTasks")
 	findOption := options.Find()
@@ -47,7 +34,7 @@ func (mts *MongoTaskRepo) GetAllTasks() []*domain.Task {
 	return tasks
 
 }
-func (mts *MongoTaskRepo) GetTaskById(id int) (*domain.Task, error) {
+func (mts *MongoRepo) GetTaskById(id int) (*domain.Task, error) {
 	fmt.Println("mongoTaskCollection---GetTaskById")
 	fmt.Println("mongoTaskCollection---GetTaskById")
 
@@ -61,7 +48,7 @@ func (mts *MongoTaskRepo) GetTaskById(id int) (*domain.Task, error) {
 	return &task, nil
 
 }
-func (mts *MongoTaskRepo) CreateTask(task domain.Task) (string, error) {
+func (mts *MongoRepo) CreateTask(task domain.Task) (string, error) {
 	fmt.Println("mongoTaskCollection---CreateTask")
 	fmt.Println("mongoTaskCollection---CreateTask")
 
@@ -76,7 +63,7 @@ func (mts *MongoTaskRepo) CreateTask(task domain.Task) (string, error) {
 	}
 	return "invalid request id is taken", err
 }
-func (mts *MongoTaskRepo) UpdateTask(id int, updateBson bson.M) error {
+func (mts *MongoRepo) UpdateTask(id int, updateBson bson.M) error {
 	fmt.Println("mongoTaskCollection---UpdateTask")
 	fmt.Println("mongoTaskCollection---UpdateTask")
 
@@ -100,7 +87,7 @@ func (mts *MongoTaskRepo) UpdateTask(id int, updateBson bson.M) error {
 	fmt.Println(result)
 	return nil
 }
-func (mts *MongoTaskRepo) DeleteTask(id int) error {
+func (mts *MongoRepo) DeleteTask(id int) error {
 	fmt.Println("mongoTaskCollection---DeleteTask")
 	fmt.Println("mongoTaskCollection---DeleteTask")
 
@@ -119,7 +106,7 @@ func (mts *MongoTaskRepo) DeleteTask(id int) error {
 
 }
 
-func (mts *MongoTaskRepo) FilterTask(filter bson.M) []*domain.Task {
+func (mts *MongoRepo) FilterTask(filter bson.M) []*domain.Task {
 	fmt.Println("mongoTaskCollection---FilterTask")
 	fmt.Println("mongoTaskCollection---FilterTask")
 

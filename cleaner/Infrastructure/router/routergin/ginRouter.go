@@ -2,7 +2,7 @@ package ginrouter
 
 import (
 	"example/cleaner/Infrastructure/middleware"
-	"example/cleaner/controller"
+	"example/cleaner/Infrastructure/router/routergin/controller"
 
 	"github.com/gin-gonic/gin"
 )

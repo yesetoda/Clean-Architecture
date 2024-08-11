@@ -35,17 +35,17 @@ func (tc *GInUserController) HandleCreateUser(ctx *gin.Context) {
 
 	msg, err := tc.Userusecase.CreateUser(User)
 	if err != nil {
-		ctx.IndentedJSON(400, msg)
+		ctx.IndentedJSON(400,  gin.H{"error":msg})
 		return
 	}
-	ctx.IndentedJSON(200, msg)
+	ctx.IndentedJSON(200,  gin.H{"message":msg})
 }
 func (tc *GInUserController) HandlePromote(ctx *gin.Context) {
 	username := ctx.Param("username")
 	update := bson.M{"$set": bson.M{"role": "admin"}}
 	err := tc.Userusecase.PromoteUser(username, update)
 	if err != nil {
-		ctx.IndentedJSON(400, err)
+		ctx.IndentedJSON(400,  gin.H{"error":err.Error()})
 		return
 	}
 	ctx.IndentedJSON(200, "update successful")
@@ -55,7 +55,7 @@ func (tc *GInUserController) HandleDeleteUser(ctx *gin.Context) {
 
 	err := tc.Userusecase.DeleteUser(username)
 	if err != nil {
-		ctx.IndentedJSON(400, err)
+		ctx.IndentedJSON(400, gin.H{"error":err.Error()})
 		return
 	}
 	ctx.IndentedJSON(200, "delete sucessful")
@@ -91,7 +91,7 @@ func (tc *GInUserController) HandleLogin(ctx *gin.Context) {
 	password := ctx.PostForm("password")
 	token, err := tc.Userusecase.Login(username, password)
 	if err != nil {
-		ctx.IndentedJSON(400, err)
+		ctx.IndentedJSON(400, gin.H{"error": "invalid credential"})
 		return
 	}
 	ctx.IndentedJSON(200, gin.H{"token": token})
