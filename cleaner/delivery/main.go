@@ -1,9 +1,7 @@
 package main
 
 import (
-	"example/cleaner/Infrastructure/database/dbmongo"
-	ginrouter "example/cleaner/Infrastructure/router/routergin"
-	"example/cleaner/Infrastructure/router/routergin/controller"
+	"example/cleaner/controller"
 	"example/cleaner/usecases"
 	"fmt"
 	"log"
@@ -19,17 +17,18 @@ func main() {
 	}
 	uri, dbname, taskCollectionName, userCollectionName := os.Getenv("MongodbUri"), os.Getenv("MongodbName"), os.Getenv("TaskCollectionName"), os.Getenv("UserCollectionName")
 	fmt.Println(uri, dbname, taskCollectionName, userCollectionName)
-	taskCollection := dbmongo.NewCollection(dbname, taskCollectionName)
-	userCollection := dbmongo.NewCollection(dbname, userCollectionName)
-	tc := controller.GInTaskController{
-		Taskusecase: usecases.TaskUsecase{
+	taskCollection := usecases.NewCollection(dbname, taskCollectionName)
+	userCollection := usecases.NewCollection(dbname, userCollectionName)
+	tc := controller.GInGenaralController{
+		Generalusecase: usecases.GeneralUsecase{
 			Repository: taskCollection,
 		},
 	}
-	uc := controller.GInUserController{
-		Userusecase: usecases.UserUsecase{
+	uc := controller.GInGenaralController{
+		Generalusecase: usecases.GeneralUsecase{
 			Repository: userCollection,
 		},
 	}
-	ginrouter.Routers(uc, tc)
+	fmt.Println("this is the router that am using")
+	controller.Routers(uc, tc)
 }

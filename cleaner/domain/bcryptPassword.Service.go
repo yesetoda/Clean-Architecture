@@ -1,4 +1,4 @@
-package hashing
+package domain
 
 import "golang.org/x/crypto/bcrypt"
 

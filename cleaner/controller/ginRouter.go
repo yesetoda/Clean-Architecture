@@ -1,14 +1,14 @@
-package ginrouter
+package controller
 
 import (
-	"example/cleaner/Infrastructure/middleware"
-	"example/cleaner/Infrastructure/router/routergin/controller"
+	"example/cleaner/middleware"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
 
 
-func Routers(uc controller.GInUserController,tc controller.GInTaskController){
+func Routers(uc GInGenaralController,tc GInGenaralController){
 	router := gin.Default()
 	router.POST("/signup", uc.HandleCreateUser)
 	router.POST("/login", uc.HandleLogin)
@@ -33,5 +33,6 @@ func Routers(uc controller.GInUserController,tc controller.GInTaskController){
 		users.DELETE("/:username", middleware.AdminMiddleware(), uc.HandleDeleteUser)
 		users.PATCH("/:username", middleware.AdminMiddleware(), uc.HandlePromote)
 	}
+	fmt.Println("all the routes are defined ")
 	router.Run(":8080")
 }
