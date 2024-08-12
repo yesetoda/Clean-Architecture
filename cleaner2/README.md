@@ -42,7 +42,7 @@ This is a simple Task Management API built using GoLang, Gin, and MongoDB, follo
 
     ```bash
     git clone https://github.com/yesetoda/Clean-Architecture
-    cd cleaner
+    cd cleaner2
     ```
 
 2. Install dependencies:
@@ -66,5 +66,5 @@ This is a simple Task Management API built using GoLang, Gin, and MongoDB, follo
 4. Run the application:
 
     ```bash
-    go run delivery/main.go
+    go run /cmd/taskmanager/main.go
     ```
