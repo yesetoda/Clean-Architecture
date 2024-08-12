@@ -1,9 +1,12 @@
-package usecases
+// remove this and do anything related to moongo in repositories
+package repositories
 
 import (
 	"context"
 	"errors"
-	"example/cleaner/domain"
+	"example/cleaner2/internal/domain"
+	"example/cleaner2/pkg"
+
 	"fmt"
 	"log"
 	"os"
@@ -15,14 +18,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetNewMongoClient() *mongo.Client {
-	clientOptions := options.Client().ApplyURI(os.Getenv("MongodbUri"))
+func GetNewMongoClient( uri string) *mongo.Client {
+	clientOptions := options.Client().ApplyURI(uri)
 	client, err := mongo.Connect(context.TODO(), clientOptions)
-
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	err = client.Ping(context.TODO(), nil)
 	if err != nil {
 		log.Fatal(err)
@@ -34,19 +35,24 @@ func GetNewMongoClient() *mongo.Client {
 type MongoRepo struct {
 	db         *mongo.Database
 	collection string
+	hasher  *pkg.Hasher
 }
 
-func NewMongoRepository(db *mongo.Database, collection string) *MongoRepo {
+
+func NewMongoRepository(uri ,db , collection string,hasher *pkg.Hasher) *MongoRepo {
 	return &MongoRepo{
-		db:         db,
+		db:        GetNewMongoClient(uri).Database(db),
 		collection: collection,
+		hasher: hasher,
 	}
 }
-func NewCollection(dbname, taskCollectionName string) *MongoRepo {
-	client := GetNewMongoClient()
-	return NewMongoRepository(client.Database(dbname), taskCollectionName)
+// func NewCollection(dbname, taskCollectionName string) *MongoRepo {
+// 	client := GetNewMongoClient()
+// 	return NewMongoRepository(client.Database(dbname), taskCollectionName)
 
-}
+// }
+
+
 
 // task
 
@@ -224,7 +230,7 @@ func (mts *MongoRepo) CreateUser(User domain.User) (string, error) {
 	_, err := mts.GetUserByUsername(User.Username)
 	if err != nil {
 		User.Role = "user"
-		User.Password, err = domain.HashPassword(User.Password)
+		User.Password, err =mts.hasher.HashPassword(User.Password)
 		if err != nil {
 			return "can't add the User", err
 		}
@@ -333,7 +339,7 @@ func (mts *MongoRepo) Login(username, password string) (string, error) {
 	if err != nil {
 		return "", errors.New("no such user")
 	}
-	if !domain.VerifyPassword(password, user.Password) {
+	if !pkg.NewHasher().VerifyPassword(password, user.Password) {
 		return "", errors.New("invalid credentials")
 	}
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"example/cleaner/controller"
+	"example/cleaner/repositories"
 	genealrouter "example/cleaner/router"
 	"example/cleaner/usecases"
 	"fmt"
@@ -18,8 +19,8 @@ func main() {
 	}
 	uri, dbname, taskCollectionName, userCollectionName := os.Getenv("MongodbUri"), os.Getenv("MongodbName"), os.Getenv("TaskCollectionName"), os.Getenv("UserCollectionName")
 	fmt.Println(uri, dbname, taskCollectionName, userCollectionName)
-	taskCollection := usecases.NewCollection(dbname, taskCollectionName)
-	userCollection := usecases.NewCollection(dbname, userCollectionName)
+	taskCollection := repositories.NewCollection(dbname, taskCollectionName)
+	userCollection := repositories.NewCollection(dbname, userCollectionName)
 	tc := controller.GInGenaralController{
 		Generalusecase: usecases.GeneralUsecase{
 			Repository: taskCollection,

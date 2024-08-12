@@ -1,27 +1,20 @@
-package usecase
+// remove this and do anything related to moongo in repositories
+package repositories
 
 import (
 	"context"
 	"errors"
-	"example/cleaner2/domain"
+	"example/cleaner/domain"
 	"fmt"
 	"log"
 	"os"
+	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-type MongoUsecase struct {
-}
-func NewMongoUsecase() *MongoUsecase{
-	return &MongoUsecase{
-		
-	}
-}
-
-// the task usecase comcrete implementation
 
 func GetNewMongoClient() *mongo.Client {
 	clientOptions := options.Client().ApplyURI(os.Getenv("MongodbUri"))
@@ -38,23 +31,37 @@ func GetNewMongoClient() *mongo.Client {
 
 	return client
 }
-func NewCollection(dbname ,taskCollectionName string) *mongo.Collection{
+
+type MongoRepo struct {
+	db         *mongo.Database
+	collection string
+}
+
+
+func NewMongoRepository(db *mongo.Database, collection string) *MongoRepo {
+	return &MongoRepo{
+		db:         db,
+		collection: collection,
+	}
+}
+func NewCollection(dbname, taskCollectionName string) *MongoRepo {
 	client := GetNewMongoClient()
-	return  client.Database(dbname).Collection(taskCollectionName)
+	return NewMongoRepository(client.Database(dbname), taskCollectionName)
 
 }
 
-var mongoTaskCollection = NewCollection(os.Getenv("MongodbName"),os.Getenv("TaskCollectionName"))
-var mongoUserCollection = NewCollection(os.Getenv("MongodbName"),os.Getenv("UserCollectionName"))
 
-func (mts *MongoUsecase) GetAllTasks() []*domain.Task {
+
+// task
+
+func (mts *MongoRepo) GetAllTasks() []*domain.Task {
 	fmt.Println("mongoTaskCollection---GetAllTasks")
 	fmt.Println("mongoTaskCollection---GetAllTasks")
 	findOption := options.Find()
 	findOption.SetLimit(100)
 	tasks := []*domain.Task{}
 
-	cursor, err := mongoTaskCollection.Find(context.TODO(), bson.D{}, findOption)
+	cursor, err := mts.db.Collection(mts.collection).Find(context.TODO(), bson.D{}, findOption)
 	if err != nil {
 		fmt.Println("could not load all the tasks 1")
 		return tasks
@@ -72,13 +79,13 @@ func (mts *MongoUsecase) GetAllTasks() []*domain.Task {
 	return tasks
 
 }
-func (mts *MongoUsecase) GetTaskById(id int) (*domain.Task, error) {
+func (mts *MongoRepo) GetTaskById(id int) (*domain.Task, error) {
 	fmt.Println("mongoTaskCollection---GetTaskById")
 	fmt.Println("mongoTaskCollection---GetTaskById")
 
 	var task domain.Task
 	filter := bson.M{"id": id}
-	err := mongoTaskCollection.FindOne(context.TODO(), filter).Decode(&task)
+	err := mts.db.Collection(mts.collection).FindOne(context.TODO(), filter).Decode(&task)
 	if err != nil {
 		fmt.Println("could not find a result")
 		return &task, err
@@ -86,13 +93,13 @@ func (mts *MongoUsecase) GetTaskById(id int) (*domain.Task, error) {
 	return &task, nil
 
 }
-func (mts *MongoUsecase) CreateTask(task domain.Task) (string, error) {
+func (mts *MongoRepo) CreateTask(task domain.Task) (string, error) {
 	fmt.Println("mongoTaskCollection---CreateTask")
 	fmt.Println("mongoTaskCollection---CreateTask")
 
 	_, err := mts.GetTaskById(task.Id)
 	if err != nil {
-		result, err := mongoTaskCollection.InsertOne(context.TODO(), task)
+		result, err := mts.db.Collection(mts.collection).InsertOne(context.TODO(), task)
 		if err != nil {
 			return "can't add the task", err
 		}
@@ -101,7 +108,7 @@ func (mts *MongoUsecase) CreateTask(task domain.Task) (string, error) {
 	}
 	return "invalid request id is taken", err
 }
-func (mts *MongoUsecase) UpdateTask(id int, updateBson interface{}) error {
+func (mts *MongoRepo) UpdateTask(id int, updateBson bson.M) error {
 	fmt.Println("mongoTaskCollection---UpdateTask")
 	fmt.Println("mongoTaskCollection---UpdateTask")
 
@@ -117,7 +124,7 @@ func (mts *MongoUsecase) UpdateTask(id int, updateBson interface{}) error {
 	fmt.Println("this is the filter: ", filter)
 	fmt.Println("this is the update: ", updateBson)
 
-	result, err := mongoTaskCollection.UpdateOne(context.TODO(), filter, updateBson)
+	result, err := mts.db.Collection(mts.collection).UpdateOne(context.TODO(), filter, updateBson)
 	if err != nil {
 		return err
 	}
@@ -125,7 +132,7 @@ func (mts *MongoUsecase) UpdateTask(id int, updateBson interface{}) error {
 	fmt.Println(result)
 	return nil
 }
-func (mts *MongoUsecase) DeleteTask(id int) error {
+func (mts *MongoRepo) DeleteTask(id int) error {
 	fmt.Println("mongoTaskCollection---DeleteTask")
 	fmt.Println("mongoTaskCollection---DeleteTask")
 
@@ -136,7 +143,7 @@ func (mts *MongoUsecase) DeleteTask(id int) error {
 	filter := bson.D{{
 		Key: "id", Value: id,
 	}}
-	_, err = mongoTaskCollection.DeleteOne(context.TODO(), filter)
+	_, err = mts.db.Collection(mts.collection).DeleteOne(context.TODO(), filter)
 	if err != nil {
 		return err
 	}
@@ -144,7 +151,7 @@ func (mts *MongoUsecase) DeleteTask(id int) error {
 
 }
 
-func (mts *MongoUsecase) FilterTask(filter interface{}) []*domain.Task {
+func (mts *MongoRepo) FilterTask(filter bson.M) []*domain.Task {
 	fmt.Println("mongoTaskCollection---FilterTask")
 	fmt.Println("mongoTaskCollection---FilterTask")
 
@@ -152,7 +159,7 @@ func (mts *MongoUsecase) FilterTask(filter interface{}) []*domain.Task {
 	findOptions.SetLimit(100)
 
 	fmt.Println("this is the filter", filter)
-	cur, err := mongoTaskCollection.Find(context.TODO(), filter, findOptions)
+	cur, err := mts.db.Collection(mts.collection).Find(context.TODO(), filter, findOptions)
 	if err != nil {
 		return []*domain.Task{}
 	}
@@ -173,17 +180,16 @@ func (mts *MongoUsecase) FilterTask(filter interface{}) []*domain.Task {
 
 }
 
-// the user usecase comcrete implementation
+// user
 
-
-func (mts *MongoUsecase) GetAllUsers() []*domain.User {
+func (mts *MongoRepo) GetAllUsers() []*domain.User {
 	fmt.Println("mongoUserCollection---GetAllUsers")
 	fmt.Println("mongoUserCollection---GetAllUsers")
 	findOption := options.Find()
 	findOption.SetLimit(100)
 	Users := []*domain.User{}
 
-	cursor, err := mongoUserCollection.Find(context.TODO(), bson.D{}, findOption)
+	cursor, err := mts.db.Collection(mts.collection).Find(context.TODO(), bson.D{}, findOption)
 	if err != nil {
 		fmt.Println("could not load all the Users 1")
 		return Users
@@ -201,13 +207,13 @@ func (mts *MongoUsecase) GetAllUsers() []*domain.User {
 	return Users
 
 }
-func (mts *MongoUsecase) GetUserByUsername(username string) (*domain.User, error) {
+func (mts *MongoRepo) GetUserByUsername(username string) (*domain.User, error) {
 	fmt.Println("mongoUserCollection---GetUserByUsername---", username)
 	fmt.Println("mongoUserCollection---GetUserByUsername")
 
 	var User domain.User
 	filter := bson.M{"username": username}
-	err := mongoUserCollection.FindOne(context.TODO(), filter).Decode(&User)
+	err := mts.db.Collection(mts.collection).FindOne(context.TODO(), filter).Decode(&User)
 	if err != nil {
 		fmt.Println("could not find a result")
 		return &User, err
@@ -215,7 +221,7 @@ func (mts *MongoUsecase) GetUserByUsername(username string) (*domain.User, error
 	return &User, nil
 
 }
-func (mts *MongoUsecase) CreateUser(User domain.User) (string, error) {
+func (mts *MongoRepo) CreateUser(User domain.User) (string, error) {
 	fmt.Println("mongoUserCollection---CreateUser")
 	fmt.Println("mongoUserCollection---CreateUser")
 
@@ -226,11 +232,11 @@ func (mts *MongoUsecase) CreateUser(User domain.User) (string, error) {
 		if err != nil {
 			return "can't add the User", err
 		}
-		cnt, _ := mongoUserCollection.CountDocuments(context.TODO(), bson.M{})
+		cnt, _ := mts.db.Collection(mts.collection).CountDocuments(context.TODO(), bson.M{})
 		if cnt == 0 {
 			User.Role = "admin"
 		}
-		result, err := mongoUserCollection.InsertOne(context.TODO(), User)
+		result, err := mts.db.Collection(mts.collection).InsertOne(context.TODO(), User)
 		if err != nil {
 			return "can't add the User", err
 		}
@@ -239,7 +245,7 @@ func (mts *MongoUsecase) CreateUser(User domain.User) (string, error) {
 	}
 	return "invalid  request Username is taken", err
 }
-func (mts *MongoUsecase) PromoteUser(username string, updateBson interface{}) error {
+func (mts *MongoRepo) PromoteUser(username string, updateBson bson.M) error {
 	fmt.Println("mongoUserCollection---UpdateUser", username)
 	fmt.Println("mongoUserCollection---UpdateUser")
 
@@ -256,7 +262,7 @@ func (mts *MongoUsecase) PromoteUser(username string, updateBson interface{}) er
 	fmt.Println("this is the filter: ", filter)
 	fmt.Println("this is the update: ", updateBson)
 
-	result, err := mongoUserCollection.UpdateOne(context.TODO(), filter, updateBson)
+	result, err := mts.db.Collection(mts.collection).UpdateOne(context.TODO(), filter, updateBson)
 	if err != nil {
 		return err
 	}
@@ -264,7 +270,7 @@ func (mts *MongoUsecase) PromoteUser(username string, updateBson interface{}) er
 	fmt.Println(result)
 	return nil
 }
-func (mts *MongoUsecase) DeleteUser(username string) error {
+func (mts *MongoRepo) DeleteUser(username string) error {
 	fmt.Println("mongoUserCollection---DeleteUser")
 	fmt.Println("mongoUserCollection---DeleteUser")
 
@@ -275,7 +281,7 @@ func (mts *MongoUsecase) DeleteUser(username string) error {
 	filter := bson.D{{
 		Key: "username", Value: username,
 	}}
-	_, err = mongoUserCollection.DeleteOne(context.TODO(), filter)
+	_, err = mts.db.Collection(mts.collection).DeleteOne(context.TODO(), filter)
 	if err != nil {
 		return err
 	}
@@ -283,7 +289,7 @@ func (mts *MongoUsecase) DeleteUser(username string) error {
 
 }
 
-func (mts *MongoUsecase) FilterUser(filter interface{}) []*domain.User {
+func (mts *MongoRepo) FilterUser(filter bson.M) []*domain.User {
 	fmt.Println("mongoUserCollection---FilterUser")
 	fmt.Println("mongoUserCollection---FilterUser")
 
@@ -291,7 +297,7 @@ func (mts *MongoUsecase) FilterUser(filter interface{}) []*domain.User {
 	findOptions.SetLimit(100)
 
 	fmt.Println("this is the filter", filter)
-	cur, err := mongoUserCollection.Find(context.TODO(), filter, findOptions)
+	cur, err := mts.db.Collection(mts.collection).Find(context.TODO(), filter, findOptions)
 	if err != nil {
 		return []*domain.User{}
 	}
@@ -312,7 +318,7 @@ func (mts *MongoUsecase) FilterUser(filter interface{}) []*domain.User {
 
 }
 
-func (mts *MongoUsecase) Login(username, password string) (string, error) {
+func (mts *MongoRepo) Login(username, password string) (string, error) {
 	fmt.Println("mongoUserCollection---Login")
 	fmt.Println("mongoUserCollection---Login")
 
@@ -322,7 +328,7 @@ func (mts *MongoUsecase) Login(username, password string) (string, error) {
 		"username": username,
 	}
 	// 	cursor := userCollection.FindOne(context.TODO(), filter)
-	cursor := mongoUserCollection.FindOne(context.TODO(), filter)
+	cursor := mts.db.Collection(mts.collection).FindOne(context.TODO(), filter)
 
 	// 	// Check user credentials
 	var user domain.User
@@ -335,7 +341,15 @@ func (mts *MongoUsecase) Login(username, password string) (string, error) {
 		return "", errors.New("invalid credentials")
 	}
 
-	tokenString, err := domain.GenerateToken(username,user.Role)
+	// Create a new token object, specifying signing method and the claims
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"username": username,
+		"role":     user.Role,
+		"exp":      time.Now().Add(time.Hour * 1).Unix(), // Token expiration time
+	})
+
+	// 	// Sign and get the complete encoded token as a string
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_KEY")))
 	if err != nil {
 		return "", err
 	}

@@ -1,14 +1,18 @@
 package usecases
 
 import (
-	"example/cleaner/domain"
-	"example/cleaner/repositories"
+	"example/cleaner2/internal/domain"
+	"example/cleaner2/internal/repositories"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 type GeneralUsecase struct {
 	Repository repositories.GeneralRepository
+}
+
+func NewGeneralUsecase(repo repositories.GeneralRepository) *GeneralUsecase{
+	return &GeneralUsecase{Repository: repo}
 }
 
 // todo: call the repository to do the tasks.this layer doesnot now which type of repo is used,no mongo,no bson
