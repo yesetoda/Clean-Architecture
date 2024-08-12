@@ -2,6 +2,7 @@ package main
 
 import (
 	"example/cleaner/controller"
+	genealrouter "example/cleaner/router"
 	"example/cleaner/usecases"
 	"fmt"
 	"log"
@@ -29,6 +30,8 @@ func main() {
 			Repository: userCollection,
 		},
 	}
-	fmt.Println("this is the router that am using")
-	controller.Routers(uc, tc)
+	fmt.Println("this is the router that am using",uc,tc)
+	
+	r := genealrouter.NewGinRouter()
+	r.Router(uc,tc)
 }

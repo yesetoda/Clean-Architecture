@@ -1,14 +1,22 @@
-package controller
+package genealrouter
 
 import (
+	"example/cleaner/controller"
 	"example/cleaner/middleware"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
 
+type GinRouter struct{
 
-func Routers(uc GInGenaralController,tc GInGenaralController){
+}
+func NewGinRouter() *GinRouter {
+	return &GinRouter{
+	}
+}
+
+func (*GinRouter) Router(uc controller.GInGenaralController,tc controller.GInGenaralController){
 	router := gin.Default()
 	router.POST("/signup", uc.HandleCreateUser)
 	router.POST("/login", uc.HandleLogin)
